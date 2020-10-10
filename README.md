@@ -28,26 +28,26 @@ pip install -e .
 
 #### 2A - Installing `fastai2` from its github repository
 
-```
+```python
 # Run this cell to install the latest version of fastai shared on github
-!pip install git+https://github.com/fastai/fastai2.git
+!pip install git+https://github.com/fastai/fastai.git
 ```
 
-```
+```python
 # Run this cell to install the latest version of fastcore shared on github
 !pip install git+https://github.com/fastai/fastcore.git
 ```
 
 #### 2B - Installing `timeseries` from its github repository
 
-```
+```python
 # Run this cell to install the latest version of timeseries shared on github
 !pip install git+https://github.com/ai-fast-track/timeseries.git
 ```
 
 ## `Usage`
 
-```
+```python
 %reload_ext autoreload
 %autoreload 2
 %matplotlib inline
@@ -56,11 +56,11 @@ pip install -e .
     The history saving thread hit an unexpected error (DatabaseError('database disk image is malformed',)).History will not be written to the database.
 
 
-```
-from fastai2.basics import *
+```python
+from fastai.basics import *
 ```
 
-```
+```python
 from timeseries.all import *
 ```
 
@@ -99,11 +99,11 @@ The six classes are separate actions, with the following meaning:
 
 ## Downloading and unzipping a time series dataset
 
-```
+```python
 dsname =  'NATOPS' #'NATOPS', 'LSST', 'Wine', 'Epilepsy', 'HandMovementDirection'
 ```
 
-```
+```python
 # url = 'http://www.timeseriesclassification.com/Downloads/NATOPS.zip'
 path = unzip_data(URLs_TS.NATOPS)
 path
@@ -119,7 +119,7 @@ path
 ## Why do I have to concatenate train and test data?
 Both Train and Train dataset contains 180 samples each. We concatenate them in order to have one big dataset and then split into train and valid dataset using our own split percentage (20%, 30%, or whatever number you see fit)
 
-```
+```python
 fname_train = f'{dsname}_TRAIN.arff'
 fname_test = f'{dsname}_TEST.arff'
 fnames = [path/fname_train, path/fname_test]
@@ -134,7 +134,7 @@ fnames
 
 
 
-```
+```python
 data = TSData.from_arff(fnames)
 print(data)
 ```
@@ -149,11 +149,11 @@ print(data)
      Sequence Length: 51
 
 
-```
+```python
 items = data.get_items()
 ```
 
-```
+```python
 idx = 1
 x1, y1 = data.x[idx],  data.y[idx]
 y1
@@ -166,7 +166,7 @@ y1
 
 
 
-```
+```python
 
 # You can select any channel to display buy supplying a list of channels and pass it to `chs` argument
 # LEFT ARM
@@ -174,17 +174,17 @@ y1
 
 ```
 
-```
+```python
 # RIGHT ARM
 # show_timeseries(x1, title=y1, chs=[3,4,5,9,10,11,15,16,17,21,22,23])
 ```
 
-```
+```python
 # ?show_timeseries(x1, title=y1, chs=range(0,24,3)) # Only the x axis coordinates
 
 ```
 
-```
+```python
 seed = 42
 splits = RandomSplitter(seed=seed)(range_of(items)) #by default 80% for train split and 20% for valid split are chosen 
 splits
@@ -202,7 +202,7 @@ splits
 
 ### Creating a Datasets object
 
-```
+```python
 lbl_dict = dict([
     ('1.0', 'I have command'),   
     ('2.0', 'All clear'),   
@@ -213,14 +213,14 @@ lbl_dict = dict([
 )
 ```
 
-```
+```python
 tfms = [[ItemGetter(0), ToTensorTS()], [ItemGetter(1), lbl_dict.get, Categorize()]]
 
 # Create a dataset
 ds = Datasets(items, tfms, splits=splits)
 ```
 
-```
+```python
 ax = show_at(ds, 2, figsize=(1,1))
 ```
 
@@ -235,7 +235,7 @@ ax = show_at(ds, 2, figsize=(1,1))
 
 ### 1st method : using `Datasets` object
 
-```
+```python
 bs = 128                            
 # Normalize at batch time
 tfm_norm = Normalize(scale_subtype = 'per_sample_per_channel', scale_range=(0, 1)) # per_sample , per_sample_per_channel
@@ -245,7 +245,7 @@ batch_tfms = [tfm_norm]
 dls1 = ds.dataloaders(bs=bs, val_bs=bs * 2, after_batch=batch_tfms, num_workers=0, device=default_device()) 
 ```
 
-```
+```python
 dls1.show_batch(max_n=9, chs=range(0,12,3))
 ```
 
@@ -257,7 +257,7 @@ dls1.show_batch(max_n=9, chs=range(0,12,3))
 
 ### 2nd method : using `DataBlock` and `DataBlock.get_items()` 
 
-```
+```python
 tsdb = DataBlock(blocks=(TSBlock, CategoryBlock),
                    get_items=get_ts_items,
                    get_x = ItemGetter(0),
@@ -266,7 +266,7 @@ tsdb = DataBlock(blocks=(TSBlock, CategoryBlock),
                    batch_tfms = batch_tfms)
 ```
 
-```
+```python
 tsdb.summary(fnames)
 ```
 
@@ -348,12 +348,12 @@ tsdb.summary(fnames)
           (TensorTS of size 4x24x51, TensorCategory([0, 3, 1, 3]))
 
 
-```
+```python
 # num_workers=0 is Microsoft Windows
 dls2 = tsdb.dataloaders(fnames, num_workers=0, device=default_device())
 ```
 
-```
+```python
 dls2.show_batch(max_n=9, chs=range(0,12,3))
 ```
 
@@ -363,7 +363,7 @@ dls2.show_batch(max_n=9, chs=range(0,12,3))
 
 ### 3rd method : using `DataBlock` and passing `items` object to the `DataBlock.dataloaders()`
 
-```
+```python
 # getters = [ItemGetter(0), ItemGetter(1)] 
 tsdb = DataBlock(blocks=(TSBlock, CategoryBlock),
                    get_x = ItemGetter(0),
@@ -371,11 +371,11 @@ tsdb = DataBlock(blocks=(TSBlock, CategoryBlock),
                    splitter=RandomSplitter(seed=seed))
 ```
 
-```
+```python
 dls3 = tsdb.dataloaders(data.get_items(), batch_tfms=batch_tfms, num_workers=0, device=default_device())
 ```
 
-```
+```python
 dls3.show_batch(max_n=9, chs=range(0,12,3))
 ```
 
@@ -385,11 +385,11 @@ dls3.show_batch(max_n=9, chs=range(0,12,3))
 
 ### 4th method : using `TSDataLoaders` class and `TSDataLoaders.from_files()`
 
-```
+```python
 dls4 = TSDataLoaders.from_files(fnames=fnames, path=path, batch_tfms=batch_tfms, lbl_dict=lbl_dict, num_workers=0, device=default_device())
 ```
 
-```
+```python
 dls4.show_batch(max_n=9, chs=range(0,12,3))
 ```
 
@@ -399,7 +399,7 @@ dls4.show_batch(max_n=9, chs=range(0,12,3))
 
 ## Training a Model
 
-```
+```python
 # Number of channels (i.e. dimensions in ARFF and TS files jargon)
 c_in = get_n_channels(dls2.train) # data.n_channels
 # Number of classes
@@ -416,7 +416,7 @@ c_in,c_out
 
 ### Creating a model
 
-```
+```python
 model = inception_time(c_in, c_out).to(device=default_device())
 model
 ```
@@ -566,13 +566,13 @@ model
 
 ### Creating a Learner object
 
-```
+```python
 # opt_func = partial(Adam, lr=3e-3, wd=0.01)
 #Or use Ranger
 def opt_func(p, lr=slice(3e-3)): return Lookahead(RAdam(p, lr=lr, mom=0.95, wd=0.01)) 
 ```
 
-```
+```python
 #Learner    
 loss_func = LabelSmoothingCrossEntropy() 
 learn = Learner(dls2, model, opt_func=opt_func, loss_func=loss_func, metrics=accuracy)
@@ -714,7 +714,7 @@ print(learn.summary())
 
 ### LR find 
 
-```
+```python
 lr_min, lr_steep = learn.lr_find()
 lr_min, lr_steep
 ```
@@ -754,7 +754,7 @@ lr_min, lr_steep
 
 ### Train
 
-```
+```python
 learn.fit_one_cycle(25, lr_max=1e-3)
 ```
 
@@ -951,7 +951,7 @@ learn.fit_one_cycle(25, lr_max=1e-3)
 
 ### Ploting the loss function
 
-```
+```python
 learn.recorder.plot_loss()
 ```
 
@@ -961,7 +961,7 @@ learn.recorder.plot_loss()
 
 ### Showing the results
 
-```
+```python
 learn.show_results(max_n=9, chs=range(0,12,3))
 ```
 
@@ -992,7 +992,7 @@ learn.show_results(max_n=9, chs=range(0,12,3))
 
 ### Showing the confusion matrix
 
-```
+```python
 interp = ClassificationInterpretation.from_learner(learn)
 interp.plot_confusion_matrix(figsize=(10,8))
 ```
